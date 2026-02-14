@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>10 Neuron to 4 Neuron Network</title>
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap");
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    "Space Grotesk", "Segoe UI", Tahoma, Geneva, Verdana,
+                    sans-serif;
+                background: radial-gradient(
+                    1200px 700px at 10% 10%,
+                    #fef6ff 0%,
+                    #f3f7ff 45%,
+                    #eef6ff 100%
+                );
+                min-height: 100vh;
+                padding: 40px 24px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #0f172a;
+                position: relative;
+                overflow-x: hidden;
+            }
+
+            body::before,
+            body::after {
+                content: "";
+                position: fixed;
+                inset: auto;
+                width: 420px;
+                height: 420px;
+                border-radius: 50%;
+                filter: blur(0px);
+                z-index: 0;
+                opacity: 0.25;
+            }
+
+            body::before {
+                top: -80px;
+                left: -60px;
+                background: radial-gradient(
+                    circle at 30% 30%,
+                    #ff8bd5,
+                    #8b5cf6 60%,
+                    transparent 70%
+                );
+            }
+
+            body::after {
+                bottom: -120px;
+                right: -80px;
+                background: radial-gradient(
+                    circle at 70% 40%,
+                    #22d3ee,
+                    #0ea5e9 55%,
+                    transparent 70%
+                );
+            }
+
+            .container {
+                max-width: 1400px;
+                width: min(1400px, 100%);
+                margin: 0 auto;
+                background: rgba(255, 255, 255, 0.92);
+                border-radius: 24px;
+                padding: 32px;
+                box-shadow: 0 30px 90px rgba(15, 23, 42, 0.12);
+                border: 1px solid rgba(148, 163, 184, 0.2);
+                backdrop-filter: blur(8px);
+                position: relative;
+                z-index: 1;
+            }
+
+            sub {
+                font-size: 0.75em;
+            }
+
+            h1 {
+                text-align: center;
+                color: #0f172a;
+                margin-bottom: 10px;
+                font-size: clamp(26px, 3vw, 36px);
+                letter-spacing: -0.02em;
+            }
+
+            .subtitle {
+                text-align: center;
+                color: #475569;
+                margin-bottom: 30px;
+                font-size: 14px;
+            }
+
+            .main-section {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) 380px;
+                gap: 28px;
+                margin-bottom: 30px;
+                align-items: start;
+            }
+
+            .visualization {
+                flex: 1;
+                background: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
+                padding: 20px;
+                border-radius: 18px;
+                height: 700px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(148, 163, 184, 0.18);
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+            }
+
+            .controls-panel {
+                width: 380px;
+                background: #f8fafc;
+                padding: 20px;
+                border-radius: 18px;
+                overflow-y: auto;
+                max-height: 700px;
+                border: 1px solid rgba(148, 163, 184, 0.18);
+                padding-bottom: 32px;
+            }
+
+            .control-section {
+                margin-bottom: 18px;
+                background: white;
+                padding: 14px 15px;
+                border-radius: 12px;
+                box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+                border: 1px solid rgba(226, 232, 240, 0.8);
+            }
+
+            .control-section h3 {
+                color: #0f172a;
+                margin-bottom: 12px;
+                font-size: 15px;
+                border-bottom: 2px solid rgba(99, 102, 241, 0.5);
+                padding-bottom: 6px;
+                cursor: pointer;
+                user-select: none;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .control-section h3:hover {
+                color: #4f46e5;
+            }
+
+            .collapse-icon {
+                transition: transform 0.3s;
+                font-size: 12px;
+            }
+
+            .collapse-icon.collapsed {
+                transform: rotate(-90deg);
+            }
+
+            .collapsible-content {
+                max-height: 2000px;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+
+            .collapsible-content.collapsed {
+                max-height: 0;
+            }
+
+            .input-control {
+                margin-bottom: 12px;
+            }
+
+            .input-control label {
+                display: block;
+                font-size: 12px;
+                color: #555;
+                margin-bottom: 3px;
+            }
+
+            .input-control input[type="range"] {
+                width: 100%;
+                height: 6px;
+                border-radius: 3px;
+                background: linear-gradient(90deg, #c7d2fe, #e2e8f0);
+                outline: none;
+                -webkit-appearance: none;
+            }
+
+            .input-control input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: #667eea;
+                cursor: pointer;
+            }
+
+            .input-control input[type="range"]::-moz-range-thumb {
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: #667eea;
+                cursor: pointer;
+                border: none;
+            }
+
+            .value-display[contenteditable="true"] {
+                display: inline-block;
+                min-width: 40px;
+                padding: 2px 6px;
+                border-radius: 6px;
+                border: 1px solid transparent;
+                background: rgba(102, 126, 234, 0.08);
+                text-align: right;
+            }
+
+            .value-display[contenteditable="true"]:focus {
+                outline: none;
+                border-color: #667eea;
+                background: rgba(102, 126, 234, 0.14);
+            }
+
+            .value-display {
+                font-weight: bold;
+                color: #667eea;
+                float: right;
+            }
+
+            canvas {
+                display: block;
+                margin: 0 auto;
+                background: white;
+                border-radius: 14px;
+                cursor: crosshair;
+                box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+            }
+
+            .weight-matrix {
+                margin-top: 20px;
+            }
+
+            .weight-row {
+                margin-bottom: 15px;
+            }
+
+            .weight-row h4 {
+                font-size: 13px;
+                color: #444;
+                margin-bottom: 8px;
+            }
+
+            .weight-inputs {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .weight-input {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .weight-input label {
+                font-size: 10px;
+                color: #666;
+                margin-bottom: 2px;
+            }
+
+            .weight-input input[type="number"] {
+                width: 100%;
+                padding: 4px;
+                font-size: 11px;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                text-align: center;
+            }
+
+            .weight-input input[type="number"]:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+
+            .bias-section {
+                background: white;
+            }
+
+            .output-values {
+                background: #f0fdf4;
+                padding: 15px;
+                border-radius: 12px;
+                margin-bottom: 20px;
+                border: 1px solid rgba(34, 197, 94, 0.25);
+            }
+
+            .output-values h3 {
+                color: #2e7d32;
+                margin-bottom: 10px;
+                font-size: 14px;
+            }
+
+            .output-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 8px;
+                padding: 8px;
+                background: white;
+                border-radius: 4px;
+            }
+
+            .output-item span:first-child {
+                font-weight: bold;
+                color: #333;
+            }
+
+            .output-item span:last-child {
+                color: #2e7d32;
+                font-family: monospace;
+            }
+
+            .binary-output {
+                margin-top: 15px;
+                padding: 12px;
+                background: white;
+                border-radius: 8px;
+                border: 2px solid rgba(34, 197, 94, 0.45);
+            }
+
+            .binary-output h4 {
+                font-size: 12px;
+                color: #2e7d32;
+                margin-bottom: 8px;
+            }
+
+            .binary-calculation {
+                font-family: monospace;
+                font-size: 11px;
+                color: #333;
+                line-height: 1.6;
+            }
+
+            .binary-result {
+                margin-top: 8px;
+                padding: 8px;
+                background: #f1f8f4;
+                border-radius: 4px;
+                font-weight: bold;
+                color: #1b5e20;
+                text-align: center;
+            }
+
+            .legend {
+                background: white;
+                padding: 15px;
+                border-radius: 12px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                border: 1px solid rgba(226, 232, 240, 0.8);
+            }
+
+            .legend h4 {
+                font-size: 13px;
+                color: #333;
+                margin-bottom: 10px;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                font-size: 11px;
+            }
+
+            .legend-color {
+                width: 30px;
+                height: 3px;
+                margin-right: 8px;
+                border-radius: 2px;
+            }
+
+            .preset-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+
+            .preset-btn {
+                padding: 8px;
+                background: white;
+                border: 2px solid #6366f1;
+                color: #4f46e5;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 600;
+                transition: all 0.2s;
+            }
+
+            .preset-btn:hover {
+                background: #4f46e5;
+                color: white;
+                transform: translateY(-1px);
+            }
+
+            .neuron-info {
+                position: fixed;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 12px;
+                border-radius: 6px;
+                font-size: 11px;
+                pointer-events: none;
+                z-index: 1000;
+                display: none;
+                max-width: 250px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                line-height: 1.6;
+            }
+
+            .neuron-info sub {
+                color: #aaa;
+            }
+
+            .weight-list {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4px 12px;
+                margin-top: 6px;
+            }
+
+            .stats-panel {
+                background: #fff7ed;
+                padding: 12px;
+                border-radius: 12px;
+                font-size: 11px;
+                margin-bottom: 15px;
+                border: 1px solid rgba(251, 146, 60, 0.25);
+            }
+
+            .stats-panel h4 {
+                font-size: 12px;
+                color: #e65100;
+                margin-bottom: 8px;
+            }
+
+            .stat-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 4px;
+                color: #333;
+            }
+
+            .button-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 15px;
+            }
+
+            .action-btn {
+                padding: 10px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: bold;
+                transition: all 0.2s;
+            }
+
+            .action-btn.primary {
+                background: #4f46e5;
+                color: white;
+            }
+
+            .action-btn.primary:hover {
+                background: #4338ca;
+            }
+
+            .action-btn.secondary {
+                background: #f1f5f9;
+                color: #0f172a;
+                border: 1px solid rgba(148, 163, 184, 0.4);
+            }
+
+            .action-btn.secondary:hover {
+                background: #e2e8f0;
+            }
+
+            @media (max-width: 1100px) {
+                .main-section {
+                    grid-template-columns: 1fr;
+                }
+
+                .controls-panel {
+                    width: 100%;
+                    max-height: unset;
+                }
+
+                .visualization {
+                    height: auto;
+                }
+
+                canvas {
+                    width: 100%;
+                    height: auto;
+                }
+            }
+
+            .action-btn.secondary {
+                background: #e0e0e0;
+                color: #333;
+            }
+
+            .action-btn.secondary:hover {
+                background: #d0d0d0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>10-Neuron to 4-Neuron Network</h1>
+            <p class="subtitle">
+                Fully connected layer with sigmoid activation • Hover over
+                neurons for details
+            </p>
+
+            <div class="main-section">
+                <div class="visualization">
+                    <canvas id="networkCanvas"></canvas>
+                </div>
+
+                <div class="controls-panel">
+                    <div class="legend">
+                        <h4>Connection Legend</h4>
+                        <div class="legend-item">
+                            <div
+                                class="legend-color"
+                                style="background: #4caf50"
+                            ></div>
+                            <span>Positive weights (green)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div
+                                class="legend-color"
+                                style="background: #f44336"
+                            ></div>
+                            <span>Negative weights (red)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div
+                                class="legend-color"
+                                style="background: #999; opacity: 0.3"
+                            ></div>
+                            <span>Weak connections (faded)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <h3 onclick="toggleSection('presets')">
+                            <span>Presets</span>
+                            <span class="collapse-icon" id="presets-icon"
+                                >▼</span
+                            >
+                        </h3>
+                        <div class="collapsible-content" id="presets-content">
+                            <div class="preset-buttons">
+                                <button
+                                    class="preset-btn"
+                                    onclick="loadPreset('zero')"
+                                >
+                                    All Zeros
+                                </button>
+                                <button
+                                    class="preset-btn"
+                                    onclick="loadPreset('ones')"
+                                >
+                                    All Ones
+                                </button>
+                                <button
+                                    class="preset-btn"
+                                    onclick="loadPreset('alternating')"
+                                >
+                                    Alternating
+                                </button>
+                                <button
+                                    class="preset-btn"
+                                    onclick="loadPreset('gradient')"
+                                >
+                                    Gradient
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <h3 onclick="toggleSection('inputs')">
+                            <span>Input Layer (10 Neurons)</span>
+                            <span class="collapse-icon" id="inputs-icon"
+                                >▼</span
+                            >
+                        </h3>
+                        <div class="collapsible-content" id="inputs-content">
+                            <div id="inputControls"></div>
+                        </div>
+                    </div>
+
+                    <div class="output-values">
+                        <h3>Output Layer (Sigmoid)</h3>
+                        <div id="outputValues"></div>
+                    </div>
+
+                    <div class="stats-panel">
+                        <h4>Network Statistics</h4>
+                        <div id="statsDisplay"></div>
+                    </div>
+
+                    <div class="control-section bias-section">
+                        <h3 onclick="toggleSection('biases')">
+                            <span>Biases (4 Output Neurons)</span>
+                            <span class="collapse-icon" id="biases-icon"
+                                >▼</span
+                            >
+                        </h3>
+                        <div class="collapsible-content" id="biases-content">
+                            <div id="biasControls"></div>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <h3 onclick="toggleSection('weights')">
+                            <span>Weights Matrix (10×4)</span>
+                            <span class="collapse-icon" id="weights-icon"
+                                >▼</span
+                            >
+                        </h3>
+                        <div class="collapsible-content" id="weights-content">
+                            <div
+                                class="weight-matrix"
+                                id="weightControls"
+                            ></div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button
+                            class="action-btn secondary"
+                            onclick="resetWeights()"
+                        >
+                            Reset Weights
+                        </button>
+                        <button
+                            class="action-btn primary"
+                            onclick="randomizeInputs()"
+                        >
+                            Random Inputs
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="neuron-info" id="neuronInfo"></div>
+        </div>
+
+        <script>
+            // Network parameters
+            const INPUT_SIZE = 10;
+            const OUTPUT_SIZE = 4;
+
+            // Network state
+            let inputs = new Array(INPUT_SIZE).fill(0.5);
+            let weights = [];
+            let biases = new Array(OUTPUT_SIZE).fill(0);
+            let outputs = new Array(OUTPUT_SIZE).fill(0);
+            let weightedSums = new Array(OUTPUT_SIZE).fill(0);
+
+            // Canvas setup
+            const canvas = document.getElementById("networkCanvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = 800;
+            canvas.height = 650;
+
+            // Hover state
+            let hoveredNeuron = null;
+            let mouseX = 0;
+            let mouseY = 0;
+
+            // Initialize weights randomly
+            function initializeWeights() {
+                weights = [];
+                for (let i = 0; i < INPUT_SIZE; i++) {
+                    weights[i] = [];
+                    for (let j = 0; j < OUTPUT_SIZE; j++) {
+                        weights[i][j] = (Math.random() * 2 - 1).toFixed(3) * 1; // Range: -1 to 1
+                    }
+                }
+                for (let j = 0; j < OUTPUT_SIZE; j++) {
+                    biases[j] = (Math.random() * 2 - 1).toFixed(3) * 1;
+                }
+            }
+
+            // Sigmoid activation function
+            function sigmoid(x) {
+                return 1 / (1 + Math.exp(-x));
+            }
+
+            // Calculate output layer
+            function calculateOutputs() {
+                for (let j = 0; j < OUTPUT_SIZE; j++) {
+                    let sum = biases[j];
+                    for (let i = 0; i < INPUT_SIZE; i++) {
+                        sum += inputs[i] * weights[i][j];
+                    }
+                    weightedSums[j] = sum;
+                    outputs[j] = sigmoid(sum);
+                }
+            }
+
+            // Draw the network
+            function drawNetwork() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const inputX = 100;
+                const outputX = 700;
+                const inputSpacing = canvas.height / (INPUT_SIZE + 1);
+                const outputSpacing = canvas.height / (OUTPUT_SIZE + 1);
+
+                // Draw connections
+                for (let i = 0; i < INPUT_SIZE; i++) {
+                    for (let j = 0; j < OUTPUT_SIZE; j++) {
+                        const weight = weights[i][j];
+                        const alpha = Math.min(Math.abs(weight), 1);
+
+                        // Highlight connections on hover
+                        let lineWidth = 0.5;
+                        let brightness = 0.6;
+                        if (hoveredNeuron) {
+                            if (
+                                (hoveredNeuron.type === "input" &&
+                                    hoveredNeuron.index === i) ||
+                                (hoveredNeuron.type === "output" &&
+                                    hoveredNeuron.index === j)
+                            ) {
+                                lineWidth = 2;
+                                brightness = 1;
+                            } else {
+                                brightness = 0.2;
+                            }
+                        }
+
+                        ctx.lineWidth = lineWidth;
+
+                        // Color based on weight sign
+                        if (weight > 0) {
+                            ctx.strokeStyle = `rgba(76, 175, 80, ${alpha * brightness})`;
+                        } else {
+                            ctx.strokeStyle = `rgba(244, 67, 54, ${alpha * brightness})`;
+                        }
+
+                        const x1 = inputX + 25;
+                        const y1 = (i + 1) * inputSpacing;
+                        const x2 = outputX - 25;
+                        const y2 = (j + 1) * outputSpacing;
+
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+                    }
+                }
+
+                // Draw input neurons
+                for (let i = 0; i < INPUT_SIZE; i++) {
+                    const x = inputX;
+                    const y = (i + 1) * inputSpacing;
+                    const activation = inputs[i];
+                    const isHovered =
+                        hoveredNeuron?.type === "input" &&
+                        hoveredNeuron?.index === i;
+
+                    // Draw neuron circle
+                    ctx.beginPath();
+                    ctx.arc(x, y, isHovered ? 24 : 20, 0, 2 * Math.PI);
+                    ctx.fillStyle = `rgba(102, 126, 234, ${activation})`;
+                    ctx.fill();
+                    ctx.strokeStyle = isHovered ? "#4557c8" : "#667eea";
+                    ctx.lineWidth = isHovered ? 3 : 2;
+                    ctx.stroke();
+
+                    // Draw glow effect on hover
+                    if (isHovered) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 28, 0, 2 * Math.PI);
+                        ctx.strokeStyle = `rgba(102, 126, 234, 0.3)`;
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+                    }
+
+                    // Draw label
+                    ctx.fillStyle = "#333";
+                    ctx.font = "bold 14px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(`I`, x - 3, y + 4);
+                    ctx.font = "10px Arial";
+                    ctx.fillText(`${i}`, x + 5, y + 7);
+                    ctx.font = "10px Arial";
+                    ctx.fillText(activation.toFixed(2), x - 50, y + 4);
+                }
+
+                // Draw output neurons
+                for (let j = 0; j < OUTPUT_SIZE; j++) {
+                    const x = outputX;
+                    const y = (j + 1) * outputSpacing;
+                    const activation = outputs[j];
+                    const isHovered =
+                        hoveredNeuron?.type === "output" &&
+                        hoveredNeuron?.index === j;
+
+                    // Draw neuron circle
+                    ctx.beginPath();
+                    ctx.arc(x, y, isHovered ? 29 : 25, 0, 2 * Math.PI);
+                    ctx.fillStyle = `rgba(46, 125, 50, ${activation})`;
+                    ctx.fill();
+                    ctx.strokeStyle = isHovered ? "#1b5e20" : "#2e7d32";
+                    ctx.lineWidth = isHovered ? 3 : 2;
+                    ctx.stroke();
+
+                    // Draw glow effect on hover
+                    if (isHovered) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 33, 0, 2 * Math.PI);
+                        ctx.strokeStyle = `rgba(46, 125, 50, 0.3)`;
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+                    }
+
+                    // Draw label
+                    ctx.fillStyle = "#fff";
+                    ctx.font = "bold 16px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(`O`, x - 3, y + 5);
+                    ctx.font = "11px Arial";
+                    ctx.fillText(`${j}`, x + 6, y + 9);
+                    ctx.fillStyle = "#333";
+                    ctx.font = "bold 11px Arial";
+                    ctx.fillText(activation.toFixed(3), x + 55, y + 4);
+                }
+
+                // Draw layer labels
+                ctx.fillStyle = "#333";
+                ctx.font = "bold 14px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("Input Layer", inputX, 25);
+                ctx.fillText("Output Layer (Sigmoid)", outputX, 25);
+            }
+
+            // Update UI
+            function updateUI() {
+                calculateOutputs();
+                drawNetwork();
+                updateOutputDisplay();
+                updateStatsDisplay();
+            }
+
+            // Update stats display
+            function updateStatsDisplay() {
+                const container = document.getElementById("statsDisplay");
+                const avgWeight =
+                    weights.flat().reduce((a, b) => a + b, 0) /
+                    (INPUT_SIZE * OUTPUT_SIZE);
+                const avgOutput =
+                    outputs.reduce((a, b) => a + b, 0) / OUTPUT_SIZE;
+                const maxWeight = Math.max(...weights.flat().map(Math.abs));
+
+                container.innerHTML = `
+                <div class="stat-item">
+                    <span>Avg Weight:</span>
+                    <span>${avgWeight.toFixed(3)}</span>
+                </div>
+                <div class="stat-item">
+                    <span>Max |Weight|:</span>
+                    <span>${maxWeight.toFixed(3)}</span>
+                </div>
+                <div class="stat-item">
+                    <span>Avg Output:</span>
+                    <span>${avgOutput.toFixed(3)}</span>
+                </div>
+            `;
+            }
+
+            // Create input controls
+            function createInputControls() {
+                const container = document.getElementById("inputControls");
+                container.innerHTML = "";
+
+                for (let i = 0; i < INPUT_SIZE; i++) {
+                    const div = document.createElement("div");
+                    div.className = "input-control";
+                    div.innerHTML = `
+                    <label>
+                        I<sub>${i}</sub>: 
+                        <span class="value-display" id="input-value-${i}" contenteditable="true"
+                              onblur="updateInputFromEditable(${i}, this.textContent)"
+                              onkeydown="handleEditableKey(event, ${i})">${inputs[i].toFixed(4)}</span>
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="range" min="0" max="1" step="0.01" value="${inputs[i]}" 
+                               id="input-slider-${i}"
+                               oninput="updateInput(${i}, this.value)">
+                    </div>
+                `;
+                    container.appendChild(div);
+                }
+            }
+
+            // Create bias controls
+            function createBiasControls() {
+                const container = document.getElementById("biasControls");
+                container.innerHTML = "";
+
+                for (let j = 0; j < OUTPUT_SIZE; j++) {
+                    const div = document.createElement("div");
+                    div.className = "input-control";
+                    div.innerHTML = `
+                    <label>
+                        b<sub>${j}</sub>: <span class="value-display" id="bias-value-${j}">${biases[j].toFixed(3)}</span>
+                    </label>
+                    <input type="range" min="-5" max="5" step="0.1" value="${biases[j]}" 
+                           oninput="updateBias(${j}, this.value)">
+                `;
+                    container.appendChild(div);
+                }
+            }
+
+            // Create weight controls
+            function createWeightControls() {
+                const container = document.getElementById("weightControls");
+                container.innerHTML = "";
+
+                for (let j = 0; j < OUTPUT_SIZE; j++) {
+                    const div = document.createElement("div");
+                    div.className = "weight-row";
+
+                    let weightsHTML = "";
+                    for (let i = 0; i < INPUT_SIZE; i++) {
+                        weightsHTML += `
+                        <div class="weight-input">
+                            <label>w<sub>${i}${j}</sub></label>
+                            <input type="number" step="0.1" value="${weights[i][j].toFixed(2)}" 
+                                   id="weight-${i}-${j}"
+                                   onchange="updateWeight(${i}, ${j}, this.value)">
+                        </div>
+                    `;
+                    }
+
+                    div.innerHTML = `
+                    <h4>O<sub>${j}</sub> Weights</h4>
+                    <div class="weight-inputs">${weightsHTML}</div>
+                `;
+                    container.appendChild(div);
+                }
+            }
+
+            // Update output display
+            function updateOutputDisplay() {
+                const container = document.getElementById("outputValues");
+                container.innerHTML = "";
+
+                for (let j = 0; j < OUTPUT_SIZE; j++) {
+                    const div = document.createElement("div");
+                    div.className = "output-item";
+                    div.innerHTML = `
+                    <span>O<sub>${j}</sub>:</span>
+                    <span>${outputs[j].toFixed(4)}</span>
+                `;
+                    container.appendChild(div);
+                }
+
+                // Add binary representation
+                const binaryDiv = document.createElement("div");
+                binaryDiv.className = "binary-output";
+
+                // Convert outputs to binary (>= 0.5 is 1)
+                const binaryDigits = outputs.map((o) => (o >= 0.5 ? 1 : 0));
+
+                // Calculate decimal value (O0 is MSB)
+                let calculation = "";
+                let decimalValue = 0;
+                for (let i = 0; i < OUTPUT_SIZE; i++) {
+                    const power = OUTPUT_SIZE - 1 - i;
+                    const value = binaryDigits[i] * Math.pow(2, power);
+                    decimalValue += value;
+
+                    if (i > 0) calculation += " + ";
+                    calculation += `${binaryDigits[i]}×2<sup>${power}</sup>`;
+                }
+
+                binaryDiv.innerHTML = `
+                    <h4>Binary Representation (≥0.5 = 1)</h4>
+                    <div class="binary-calculation">${calculation}</div>
+                    <div class="binary-result">Decimal: ${decimalValue}</div>
+                `;
+                container.appendChild(binaryDiv);
+            }
+
+            // Update handlers
+            function updateInput(index, value) {
+                inputs[index] = parseFloat(value);
+                document.getElementById(`input-value-${index}`).textContent =
+                    inputs[index].toFixed(4);
+                updateUI();
+            }
+
+            function updateInputFromEditable(index, value) {
+                let nextValue = parseFloat(value);
+                if (Number.isNaN(nextValue)) {
+                    document.getElementById(
+                        `input-value-${index}`,
+                    ).textContent = inputs[index].toFixed(4);
+                    return;
+                }
+                nextValue = Math.min(1, Math.max(0, nextValue));
+                inputs[index] = nextValue;
+                document.getElementById(`input-value-${index}`).textContent =
+                    inputs[index].toFixed(4);
+                const slider = document.getElementById(`input-slider-${index}`);
+                if (slider) {
+                    slider.value = inputs[index];
+                }
+                updateUI();
+            }
+
+            function handleEditableKey(event, index) {
+                if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                    event.preventDefault();
+                    const step = event.shiftKey ? 0.1 : 0.01;
+                    const delta = event.key === "ArrowUp" ? step : -step;
+                    const current = Number.isNaN(
+                        parseFloat(event.currentTarget.textContent),
+                    )
+                        ? inputs[index]
+                        : parseFloat(event.currentTarget.textContent);
+                    const nextValue = Math.min(1, Math.max(0, current + delta));
+                    updateInputFromEditable(index, nextValue.toFixed(4));
+                    return;
+                }
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    event.currentTarget.blur();
+                    return;
+                }
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    event.currentTarget.textContent = inputs[index].toFixed(4);
+                    event.currentTarget.blur();
+                }
+            }
+
+            function updateBias(index, value) {
+                biases[index] = parseFloat(value);
+                document.getElementById(`bias-value-${index}`).textContent =
+                    biases[index].toFixed(3);
+                updateUI();
+            }
+
+            function updateWeight(i, j, value) {
+                weights[i][j] = parseFloat(value);
+                updateUI();
+            }
+
+            function resetWeights() {
+                initializeWeights();
+                createBiasControls();
+                createWeightControls();
+                updateUI();
+            }
+
+            function randomizeInputs() {
+                for (let i = 0; i < INPUT_SIZE; i++) {
+                    inputs[i] = Math.random();
+                    document.getElementById(`input-value-${i}`).textContent =
+                        inputs[i].toFixed(2);
+                    const slider = document.querySelector(
+                        `input[oninput="updateInput(${i}, this.value)"]`,
+                    );
+                    if (slider) slider.value = inputs[i];
+                }
+                updateUI();
+            }
+
+            // Preset configurations
+            function loadPreset(type) {
+                switch (type) {
+                    case "zero":
+                        inputs.fill(0);
+                        break;
+                    case "ones":
+                        inputs.fill(1);
+                        break;
+                    case "alternating":
+                        inputs = inputs.map((_, i) => i % 2);
+                        break;
+                    case "gradient":
+                        inputs = inputs.map((_, i) => i / (INPUT_SIZE - 1));
+                        break;
+                }
+                createInputControls();
+                updateUI();
+            }
+
+            // Toggle collapsible sections
+            function toggleSection(section) {
+                const content = document.getElementById(`${section}-content`);
+                const icon = document.getElementById(`${section}-icon`);
+                content.classList.toggle("collapsed");
+                icon.classList.toggle("collapsed");
+            }
+
+            // Mouse interaction for hover effects
+            canvas.addEventListener("mousemove", (e) => {
+                const rect = canvas.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseY = e.clientY - rect.top;
+
+                const inputX = 100;
+                const outputX = 700;
+                const inputSpacing = canvas.height / (INPUT_SIZE + 1);
+                const outputSpacing = canvas.height / (OUTPUT_SIZE + 1);
+
+                hoveredNeuron = null;
+
+                // Check input neurons
+                for (let i = 0; i < INPUT_SIZE; i++) {
+                    const x = inputX;
+                    const y = (i + 1) * inputSpacing;
+                    const dist = Math.sqrt(
+                        (mouseX - x) ** 2 + (mouseY - y) ** 2,
+                    );
+                    if (dist < 25) {
+                        hoveredNeuron = { type: "input", index: i };
+                        showNeuronInfo(rect, -x, y - 40, "input", i);
+                        break;
+                    }
+                }
+
+                // Check output neurons
+                for (let j = 0; j < OUTPUT_SIZE; j++) {
+                    const x = outputX;
+                    const y = (j + 1) * outputSpacing;
+                    const dist = Math.sqrt(
+                        (mouseX - x) ** 2 + (mouseY - y) ** 2,
+                    );
+                    if (dist < 30) {
+                        hoveredNeuron = { type: "output", index: j };
+                        showNeuronInfo(rect, x, y, "output", j);
+                        break;
+                    }
+                }
+
+                if (!hoveredNeuron) {
+                    hideNeuronInfo();
+                }
+
+                drawNetwork();
+            });
+
+            canvas.addEventListener("mouseleave", () => {
+                hoveredNeuron = null;
+                hideNeuronInfo();
+                drawNetwork();
+            });
+
+            function showNeuronInfo(rect, x, y, type, index) {
+                const info = document.getElementById("neuronInfo");
+                let content = "";
+
+                if (type === "input") {
+                    const connections = outputs
+                        .map(
+                            (_, j) =>
+                                `<div>w<sub>${index}${j}</sub> = ${weights[index][j].toFixed(2)}</div>`,
+                        )
+                        .join("");
+                    content = `
+                    <strong>Input Neuron I<sub>${index}</sub></strong><br>
+                    Activation: ${inputs[index].toFixed(3)}<br>
+                    <br>
+                    <strong>Outgoing weights:</strong><br>
+                    <div class="weight-list">${connections}</div>
+                `;
+                } else {
+                    const connections = weights
+                        .map(
+                            (w, i) =>
+                                `<div>w<sub>${i}${index}</sub> = ${w[index].toFixed(2)}</div>`,
+                        )
+                        .join("");
+                    content = `
+                    <strong>Output Neuron O<sub>${index}</sub></strong><br>
+                    Weighted Sum: ${weightedSums[index].toFixed(3)}<br>
+                    σ(z): ${outputs[index].toFixed(4)}<br>
+                    Bias b<sub>${index}</sub>: ${biases[index].toFixed(2)}<br>
+                    <br>
+                    <strong>Incoming weights:</strong><br>
+                    <div class="weight-list">${connections}</div>
+                `;
+                }
+
+                info.innerHTML = content;
+                info.style.display = "block";
+
+                const baseX = rect.left + x;
+                const baseY = rect.top + y;
+                const preferRight = type === "input";
+                const padding = 12;
+
+                requestAnimationFrame(() => {
+                    const infoRect = info.getBoundingClientRect();
+                    const offsetY = -infoRect.height / 2;
+
+                    let left = preferRight
+                        ? baseX + 18
+                        : baseX - infoRect.width - 18;
+                    let top = baseY + offsetY;
+
+                    if (left + infoRect.width > window.innerWidth - padding) {
+                        left = window.innerWidth - infoRect.width - padding;
+                    }
+                    if (left < padding) {
+                        left = padding;
+                    }
+                    if (top + infoRect.height > window.innerHeight - padding) {
+                        top = window.innerHeight - infoRect.height - padding;
+                    }
+                    if (top < padding) {
+                        top = padding;
+                    }
+
+                    info.style.left = `${left}px`;
+                    info.style.top = `${top}px`;
+                });
+            }
+
+            function hideNeuronInfo() {
+                document.getElementById("neuronInfo").style.display = "none";
+            }
+
+            // Initialize
+            initializeWeights();
+            createInputControls();
+            createBiasControls();
+            createWeightControls();
+            updateUI();
+
+            // Collapse weights section by default for cleaner UI
+            toggleSection("weights");
+        </script>
+    </body>
+</html>
